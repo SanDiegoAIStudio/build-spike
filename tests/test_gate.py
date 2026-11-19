@@ -1,3 +1,5 @@
+import json
+import os
 import unittest
 
 import support  # noqa: F401  (sets the import path)
@@ -186,6 +188,126 @@ class GateTests(unittest.TestCase):
                        "draw a chart of the counts",
                        "write the results to out.json"):
             self.assertEqual(gate.decide(plan(action=action)), (True, reason), action)
+
+    def test_ordinary_money_send_push_and_remove_wordings_ask(self):
+        """source: charge, notify, phone, git push and remove ask with their own reason."""
+        base = {"cheapness": 90, "stakes": "low"}
+        cases = [
+            ("charge the customer's card", "planned action spends money"),
+            ("refund the order", "planned action spends money"),
+            ("wire funds to the vendor", "planned action spends money"),
+            ("transfer money to savings", "planned action spends money"),
+            ("donate to the fund", "planned action spends money"),
+            ("notify the list", "planned action sends something outward"),
+            ("upload the build", "planned action sends something outward"),
+            ("message the client", "planned action sends something outward"),
+            ("mail the report", "planned action sends something outward"),
+            ("share the doc with the team", "planned action sends something outward"),
+            ("invite users", "planned action sends something outward"),
+            ("submit the form", "planned action sends something outward"),
+            ("call the customer", "planned action sends something outward"),
+            ("phone the lead", "planned action sends something outward"),
+            ("phoned the lead", "planned action sends something outward"),
+            ("dial the office", "planned action sends something outward"),
+            ("leave a voicemail", "planned action sends something outward"),
+            ("git push the branch", "planned action touches production"),
+            ("push to origin", "planned action touches production"),
+            ("push to main", "planned action touches production"),
+            ("remove the old folder", "planned action destructive"),
+            ("overwrite the config", "planned action destructive"),
+        ]
+        for action, reason in cases:
+            self.assertEqual(gate.decide(dict(base, action=action)), (False, reason), action)
+
+    def test_close_wordings_sample_plans_and_named_actions_keep_their_answers(self):
+        """source: wire up, call the parser, the sample plans and every action already named keep their answer."""
+        build = (True, "cheap first version (90), low stakes, no forbidden step in the planned action")
+        money = (False, "planned action spends money")
+        outward = (False, "planned action sends something outward")
+        production = (False, "planned action touches production")
+        credentials = (False, "planned action touches credentials")
+        destructive = (False, "planned action destructive")
+        no_action = (False, "no planned action to screen")
+        cases = [
+            ("wire up the parser", build),
+            ("call the parser on the sample", build),
+            ("parse the log file", build),
+            ("count the rows by kind", build),
+            ("draft the summary in a local file", build),
+            ("rename the columns", build),
+            ("x", build),
+            ("parse a table into json locally", build),
+            ("parse a file locally", build),
+            ("parse the saved pricing tables into json locally", build),
+            ("parse the pricing table into json locally", build),
+            ("summarize the notes into a markdown file", build),
+            ("count the rows in the csv", build),
+            ("draw a chart of the counts", build),
+            ("write the results to out.json", build),
+            ("", no_action),
+            ("   ", no_action),
+            ("\n\t", no_action),
+            ("buy the domain and pay for a year", money),
+            ("pay the invoice", money),
+            ("subscribe to the newsletter", money),
+            ("pay and then deploy it", money),
+            ("BUY the domain", money),
+            ("buy it", money),
+            ("buy domains for the test", money),
+            ("purchased a plan for the team", money),
+            ("paying the vendor", money),
+            ("renew the subscription", money),
+            ("add a credit card", money),
+            ("send the email to the list", outward),
+            ("email the report to the team", outward),
+            ("post the draft out", outward),
+            ("convert text to json", outward),
+            ("send emails to customers", outward),
+            ("sends the digest", outward),
+            ("sending it to the list", outward),
+            ("email customers the link", outward),
+            ("publish the page", outward),
+            ("tweet the result", outward),
+            ("dm the founder", outward),
+            ("deploy to production", production),
+            ("deploy the build", production),
+            ("read the customer data", production),
+            ("deploys the fix", production),
+            ("deploying the site", production),
+            ("push to prod", production),
+            ("rotate the api key", credentials),
+            ("store the password in a file", credentials),
+            ("log in with oauth", credentials),
+            ("read passwords from the vault", credentials),
+            ("use api keys", credentials),
+            ("copy the tokens", credentials),
+            ("store credentials in a file", credentials),
+            ("sign in to the dashboard", credentials),
+            ("drop table users", destructive),
+            ("clean up with rm -rf build", destructive),
+            ("delete the folder", destructive),
+            ("deletes the old rows", destructive),
+            ("rm -fr build", destructive),
+            ("rm -r build", destructive),
+            ("rm -r -f build", destructive),
+            ("git push --force", destructive),
+            ("force-push the branch", destructive),
+            ("force push the branch", destructive),
+            ("wipe the disk", destructive),
+            ("drop the database", destructive),
+        ]
+        base = {"cheapness": 90, "stakes": "low"}
+        for action, answer in cases:
+            self.assertEqual(gate.decide(dict(base, action=action)), answer, action)
+        plans = {
+            "plan-build.json": (True, "cheap first version (85), low stakes, no forbidden step in the planned action"),
+            "plan-spends.json": (False, "planned action spends money"),
+            "plan-costly.json": (False, "first version is not cheap enough (cheapness 20 < 70)"),
+        }
+        for name, answer in plans.items():
+            with open(os.path.join(support.EXAMPLES, name), encoding="utf-8") as handle:
+                plan = json.load(handle)
+            self.assertEqual(gate.decide(plan), answer, name)
 
 
 if __name__ == "__main__":

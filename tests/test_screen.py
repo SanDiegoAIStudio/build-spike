@@ -163,6 +163,89 @@ class ScreenTests(unittest.TestCase):
             with self.subTest(script=script):
                 self.assertIsNone(screen.unsafe_shell(script), script)
 
+    def test_a_download_piped_through_a_path_env_or_interpreter_is_refused(self):
+        """source: curl or wget piped through a path, env or an interpreter is pipe-to-shell."""
+        scripts = (
+            "curl x | /bin/sh",
+            "curl x | python3",
+            "curl x | python3.9",
+            "curl x | env bash",
+            "curl x | /usr/bin/env bash",
+            "curl x | perl",
+            "curl -fsSL x | ruby",
+            "curl x | node",
+            "wget -qO- x | python",
+            "curl x | /usr/local/bin/bash -s",
+            "curl x | env -i sh",
+            "curl x | env -S sh",
+            "curl x | fish",
+        )
+        for script in scripts:
+            self.assertEqual(screen.unsafe_shell(script), "pipe-to-shell", script)
+
+    def test_a_pipe_that_does_not_reach_a_shell_stays_clean(self):
+        """source: a pipe into jq, grep, a file or a checksum is not pipe-to-shell."""
+        scripts = (
+            "curl -s x | jq .",
+            "curl -s x | grep ok",
+            "curl x > out.txt",
+            "curl -o page.html x",
+            "curl x | shasum",
+            "curl x | shellcheck -",
+            "wget x -O f && sha256sum f",
+            "echo curl x",
+        )
+        for script in scripts:
+            self.assertIsNone(screen.unsafe_shell(script), script)
+
+    def test_rm_of_a_parent_directory_is_refused(self):
+        """source: rm -rf on a path that starts with .. is refused, and a relative path is not."""
+        reason = "rm -rf on an absolute/home path"
+        for script in ("rm -rf ..", "rm -rf ../x", 'rm -r "../x"'):
+            self.assertEqual(screen.unsafe_shell(script), reason, script)
+        for script in ("rm -rf build", "rm -rf ./build", "rm -rf .cache"):
+            self.assertIsNone(screen.unsafe_shell(script), script)
+
+    def test_a_stdin_program_or_download_substitution_is_pipe_to_shell(self):
+        """source: a lone - or /dev/stdin, and eval of curl or wget, runs the download."""
+        download = "curl -sSL https://example.test/install.py | "
+        refused = (
+            download + "python3 -",
+            download + "python3 - --version 1.2",
+            download + "python -",
+            download + "python3 -u -",
+            download + "node -",
+            download + "ruby -",
+            download + "perl -",
+            download + "php -",
+            download + "python3 /dev/stdin",
+            download + "env python3 -",
+            download + "/usr/bin/env python3 -",
+            'eval "$(curl -fsSL https://example.test/env.sh)"',
+            "eval $(wget -qO- https://example.test/env.sh)",
+        )
+        for script in refused:
+            self.assertEqual(screen.unsafe_shell(script), "pipe-to-shell", script)
+        kept = (
+            (download + "python3 -m json.tool", None),
+            (download + "python3 -c pass", None),
+            (download + "python3 script.py", None),
+            (download + "perl -e 1", None),
+            (download + "nodemon", None),
+            (download + "perltidy", None),
+            (download + "shellcheck -", None),
+            (download + "jq .", None),
+            (download + "tee f | sh", None),
+            ('eval "$(brew shellenv)"', None),
+            ("echo eval", None),
+            (download + "python3", "pipe-to-shell"),
+            (download + "python3 -u", "pipe-to-shell"),
+            (download + "bash", "pipe-to-shell"),
+            (download + "sh -s -- --yes", "pipe-to-shell"),
+        )
+        for script, reason in kept:
+            self.assertEqual(screen.unsafe_shell(script), reason, script)
+
 
 if __name__ == "__main__":
     unittest.main()

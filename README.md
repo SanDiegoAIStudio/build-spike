@@ -139,7 +139,7 @@ The checks run in that order and the first failure decides. Cheapness below the 
 | Touches credentials | `planned action touches credentials` | `rotate the api key` |
 | Destructive | `planned action destructive` | `drop table users` |
 
-Each category also catches the usual plural and past forms and a few close wordings, for example `send emails to customers`, `read passwords`, `delete the folder` and `git push --force`.
+Each category also catches the usual plural and past forms and a few close wordings, for example `send emails to customers`, `read passwords`, `delete the folder` and `git push --force`. Spending also counts charge, refund, donate, money and fund, so `wire funds to the vendor` asks while `wire up the parser` still builds, because a bare wire is not on the list. Sending outward also counts notify, upload, message, mail, share, invite and submit, plus phone, dial and voicemail. The forms call, calls, called and calling ask only when followed by an optional article or possessive (the, a, an, my, our, their or your) and a person word (customer, client, lead, user, owner, vendor, people, someone or them, each with an optional plural s), so `call the parser` still builds. Production also counts `git push`, and push, pushes, pushed or pushing followed by to. `git push --force` stays destructive. Destructive also counts remove and overwrite.
 
 Only the action is screened. An idea may be about customers or money; what matters is that the automatic step taken on it does not spend, send, deploy, sign in or destroy. A plan that passes prints `BUILD` with the numbers behind it; any other plan prints `ASK` with the reason and exits 1.
 
@@ -151,9 +151,9 @@ The gate gives permission and does not rank. If ten ideas pass, order them howev
 
 | Reason | What it looks for |
 |---|---|
-| rm -rf on an absolute/home path | `rm` aimed at a path that starts with `~`, `/`, `$HOME` or `${HOME}`, quoted or not, when any recursive flag form counts (`-r`, `-R`, a cluster such as `-rfv`, or `--recursive`), with other options and `--` allowed before the path, such as `rm -rf ~/projects` |
+| rm -rf on an absolute/home path | `rm` aimed at a path that starts with `~`, `/`, `..`, `$HOME` or `${HOME}`, quoted or not, when any recursive flag form counts (`-r`, `-R`, a cluster such as `-rfv`, or `--recursive`), with other options and `--` allowed before the path, such as `rm -rf ~/projects`. A path that starts with `..` counts when the next character is `/`, a quote, a space or the end of the line, such as `rm -rf ..` and `rm -rf ../x`. A relative path such as `rm -rf ./build` does not count. |
 | sudo | the word `sudo` |
-| pipe-to-shell | `curl` or `wget` piped into `sh`, `bash`, `zsh`, `dash` or `ksh`, and the forms `bash -c "$(curl ...)"` and `<(curl ...)` |
+| pipe-to-shell | `curl` or `wget` piped into a shell or another interpreter: an optional path, an optional `env` with option words such as `-i` or `-S`, then `sh`, `bash`, `zsh`, `dash`, `ksh`, `fish`, `python` (including `python2`, `python3` and a minor version such as `python3.9`), `perl`, `ruby`, `node` or `php`. `python`, `perl`, `ruby`, `node` and `php` count when only option words follow them, or when a lone `-` or `/dev/stdin` follows, and do not count when they name a script, a module or code of their own, such as `python3 -m json.tool`. A bare pipe into `sh`, `bash`, `zsh`, `dash` or `ksh` still counts, as do `bash -c "$(curl ...)"`, `eval "$(curl ...)"` and `<(curl ...)`. |
 | git push | `git push` |
 | system control | `shutdown`, `reboot`, `kill -9`, `killall -9`, `launchctl`, `systemctl` |
 | remote access | `ssh`, `scp` or `rsync`, such as `scp out.txt backup:/tmp` |
@@ -250,13 +250,14 @@ python3 -m unittest discover -s tests
 python3 tests/mutate.py
 ```
 
-The first runs the unit tests in about ten seconds. The second proves they can fail: it breaks the code one place at a time in a temporary copy of the repository, runs the tests against each copy, prints `killed` when the tests noticed and `SURVIVED` when they did not, and exits 1 if any survived. On the macOS machine the tests were run on, the mutation run took about 13 minutes. The tests use only temporary folders, run no check script except the sample's own `verify.sh` inside a temporary copy, and leave nothing behind in the repository.
+The first runs the unit tests in about ten seconds and reports 230 tests. The second proves they can fail: it breaks the code one place at a time in a temporary copy of the repository, runs the tests against each copy, prints `killed` when the tests noticed and `SURVIVED` when they did not, and exits 1 if any survived. It reports 94 mutations, and every one is killed. On the macOS machine the tests were run on, the mutation run took between 8 and 14 minutes. The tests use only temporary folders, run no check script except the sample's own `verify.sh` inside a temporary copy, and leave nothing behind in the repository.
 
 ## Limits
 
 - The kit never runs the check script and never builds anything itself. `close` trusts the exit code it is given.
-- The screen and the forbidden list are pattern checks that a determined script can get past. The screen is not a sandbox, so run a check that a model wrote in a container, a throwaway machine or a restricted account.
-- The patterns are blunt on purpose and will ask about harmless wording. Any action naming one of the plain words in the lists asks, for example `convert text to json` and `count words in the text file` (the word `text`), `write a blog post draft` (`post`), `count tokens in the prompt` (`token`) and `list deleted files` (`deleted`). A wrong ask costs one question.
+- The screen and the forbidden list are pattern checks that a determined script can get past. The screen is not a sandbox, so run a check that a model wrote in a container, a throwaway machine or a restricted account. The screen still misses a download that reaches a shell through another command, such as a second pipe through `tee`. An interpreter that names its own script or module is not counted, so a download piped into a program that runs its input another way is not caught.
+- The patterns are blunt on purpose and will ask about harmless wording. Any action naming one of the plain words in the lists asks, for example `convert text to json` and `count words in the text file` (the word `text`), `write a blog post draft` (`post`), `count tokens in the prompt` (`token`), `list deleted files` (`deleted`) and `remove duplicate rows` (`remove`). A wrong ask costs one question.
+- `count` splits lines the way Python's `str.splitlines` does, so a JSONL row holding a raw U+2028 or U+2029 character inside a string is reported as not valid JSON.
 - The screen reads `verify.sh` only. It does not read the files that `verify.sh` runs, such as `table_to_json.py` in the sample, so screen those yourself or keep the whole check inside `verify.sh`.
 - The forbidden list is English only.
 - The record uses a file lock, so the kit works on POSIX systems only.

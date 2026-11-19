@@ -10,15 +10,20 @@ from typing import Optional
 UNSAFE = (
     # Reads rm when one option is recursive (a short flag containing r or R,
     # a cluster, or --recursive), with other options and -- allowed, then a
-    # path starting with ~, /, $HOME or ${HOME}.
+    # path starting with ~, /, .., $HOME or ${HOME}. A .. path counts when the
+    # next character is /, a quote, a space or the end of the line.
     (r"\brm(?:\s+(?:-[A-Za-z]+|--[A-Za-z]+(?:-[A-Za-z]+)*|--))*"
      r"\s+(?:-[A-Za-z]*[rR][A-Za-z]*|--recursive)"
      r"(?:\s+(?:-[A-Za-z]+|--[A-Za-z]+(?:-[A-Za-z]+)*|--))*"
-     r"\s+[\"']?(?:~|/|\$\{HOME\}|\$HOME)",
+     r"\s+[\"']?(?:~|/|\.\.(?:/|[\"']|\s|$)|\$\{HOME\}|\$HOME)",
      "rm -rf on an absolute/home path"),
     (r"\bsudo\b", "sudo"),
-    (r"(curl|wget)[^\n|]*\|\s*(?:ba|z|da|k)?sh\b"
+    (r"(?m)(curl|wget)[^\n|]*\|\s*(?:ba|z|da|k)?sh\b"
+     r"|(curl|wget)[^\n|]*\|\s*(?:\S*/)?(?:\benv\b(?:\s+-\S+)*\s+)?"
+     r"(?:zsh|bash|dash|ksh|sh|fish|perl|ruby|node|php|python(?:[23](?:\.\d+)?)?)\b"
+     r"(?:\s+-\S+)*(?:(?=\s*(?:$|[;&]|&&|\|\|))|\s+(?:-|/dev/stdin)(?!\S))"
      r"|\b(?:bash|zsh|dash|ksh|sh)\s+-c\s+[\"']\$\((?:curl|wget)"
+     r"|\beval\s+[\"']?\$\(\s*(?:curl|wget)"
      r"|\b(?:bash|dash|ksh|sh|source)\s*<\(\s*(?:curl|wget)"
      r"|\.\s*<\(\s*(?:curl|wget)",
      "pipe-to-shell"),

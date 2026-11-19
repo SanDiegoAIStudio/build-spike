@@ -19,21 +19,25 @@ STAKES = ("low", "medium", "high")
 FORBIDDEN = (
     (r"\b(?:buys?|buying|bought|purchas(?:e|es|ed|ing)|pays?|paying|payments?|paid|invoices?|"
      r"subscri(?:ptions|ption|bing|bes|bed|be)|checkouts?|stripe|billings?|"
-     r"renew(?:als|al|ed|ing|s)?|credit cards?)\b",
+     r"renew(?:als|al|ed|ing|s)?|credit cards?|"
+     r"charg(?:e|es|ed|ing)|refund(?:s|ed|ing)?|donat(?:e|es|ed|ing)|money|funds?)\b",
      "spends money"),
     (r"\b(?:sends?|sending|sent|emails?|emailed|emailing|dms?|texts?|texted|texting|sms|"
      r"posts?|posted|posting|publish(?:es|ed|ing)?|tweets?|tweeted|tweeting|outreach|"
-     r"replies|replied|replying|reply)\b",
+     r"replies|replied|replying|reply|"
+     r"notif(?:y|ies|ied|ying|ication|ications)|upload(?:s|ed|ing)?|messag(?:e|es|ed|ing)|mails?|mailed|mailing|shar(?:e|es|ed|ing)|invit(?:e|es|ed|ing)|submit(?:s|ted|ting)?|"
+     r"phon(?:e|ed|ing)|dial(?:s|ed|ing)?|voicemails?|call(?:s|ed|ing)?\s+(?:(?:their|your|the|our|an|my|a)\s+)?(?:customer|client|lead|user|owner|vendor|people|someone|them)s?)\b",
      "sends something outward"),
     (r"\b(?:deploys?|deploying|deployed|ship to prod|push to prod|productions?|live site|"
-     r"customer data|client data)\b",
+     r"customer data|client data|"
+     r"git\s+push(?!\s+--force)|push(?:es|ed|ing)?\s+to)\b",
      "touches production"),
     (r"\b(?:api[ _-]?keys?|credentials?|passwords?|tokens?|secrets?|rotates?|rotated|rotating|"
      r"oauth|logins?|sign[\s-]?ins?)\b",
      "touches credentials"),
     (r"\b(?:drop table|drop(?:\s+(?:the\s+)?)?database|deletes?|deleted|deleting|truncate|"
      r"migrate the db|rm\s+-(?:rf|fr|r(?:\s+-f)?)|git\s+push\s+--force|force[\s-]push|wipes?|"
-     r"wiped|wiping)\b",
+     r"wiped|wiping|remov(?:e|es|ed|ing)|overwrit(?:e|es|ing|ten)|overwrote)\b",
      "destructive"),
 )
 
