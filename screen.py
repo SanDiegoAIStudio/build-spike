@@ -18,9 +18,9 @@ UNSAFE = (
      r"\s+[\"']?(?:~|/|\.\.(?:/|[\"']|\s|$)|\$\{HOME\}|\$HOME)",
      "rm -rf on an absolute/home path"),
     (r"\bsudo\b", "sudo"),
-    (r"(?m)(curl|wget)[^\n|]*\|\s*(?:ba|z|da|k)?sh\b"
-     r"|(curl|wget)[^\n|]*\|\s*(?:\S*/)?(?:\benv\b(?:\s+(?:-\S+|\S*=\S*))*\s+)?"
-     r"(?:(?:zsh|bash|dash|ksh|sh)\b(?=[\s;&)<>|]|$)"
+    (r"(?m)(curl|wget)(?:[^\n|]|\\\n)*\|\s*(?:ba|z|da|k)?sh\b"
+     r"|(curl|wget)(?:[^\n|]|\\\n)*\|\s*(?:\S*/)?(?:\benv\b(?:\s+(?:-\S+|\S*=\S*))*\s+(?:\S*/)?)?"
+     r"(?:(?:zsh|bash|dash|ksh|sh)\b(?=[\s;&)<>|\"'`]|$)"
      r"|(?:fish|perl|ruby|node|php|python(?:[23](?:\.\d+)?)?)\b"
      r"(?:\s+-\S+)*(?:(?=\s*(?:$|[;&)#<>|]|&&|\|\||\d+>))"
      r"|\s+(?:-|/dev/stdin)(?!\S)))"

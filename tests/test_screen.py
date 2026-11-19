@@ -299,6 +299,42 @@ class ScreenTests(unittest.TestCase):
         for script, reason in kept:
             self.assertEqual(screen.unsafe_shell(script), reason, script)
 
+    def test_a_continued_download_a_quoted_shell_or_a_path_after_env_is_pipe_to_shell(self):
+        """source: a download continued over a backslash and a newline, a quote or backtick after a path or env shell, and a path after env are pipe-to-shell."""
+        download = "cu" + "rl -sSL https://example.test/install.sh | "
+        flag = " -sSL https://example.test/install.sh"
+        continued = " \\\n  | "
+        refused = (
+            "cu" + "rl" + flag + continued + "sh",
+            "cu" + "rl" + flag + continued + "bash -s -- --yes",
+            "cu" + "rl -fsSL \\\n  https://example.test/install.sh" + continued + "/bin/bash",
+            "wg" + "et -qO- https://example.test/install.sh" + continued + "python3 -",
+            "cu" + "rl" + flag + continued + "env FOO=1 sh",
+            'bash -c "' + download + '/bin/sh"',
+            "bash -c '" + download + "/bin/sh'",
+            'sh -c "' + download + 'env bash"',
+            "x=`" + download + "/bin/bash`",
+            download + "env /bin/bash",
+            download + "env FOO=1 /bin/sh -s -- --yes",
+            download + "/usr/bin/env /usr/bin/python3",
+            download + "env -i /usr/bin/python3 -",
+        )
+        for script in refused:
+            self.assertEqual(screen.unsafe_shell(script), "pipe-to-shell", script)
+        kept = (
+            ("cu" + "rl -sSL https://example.test/data.json" + continued + "jq .", None),
+            ("cu" + "rl -sSL https://example.test/data.json \\\n  -o data.json", None),
+            ("cu" + "rl -sSL https://example.test/a.sh -o a.sh\nsh a.sh", None),
+            ("cu" + "rl -sSL https://example.test/a.sh -o a.sh\necho done | sh", None),
+            (download + "env -u FOO bash", None),
+            (download + "env /usr/bin/shasum -a 256", None),
+            (download + "env /opt/sh/tool run", None),
+            (download + "env /usr/bin/python3 script.py", None),
+            (download + "/bin/sh.d/tool", None),
+        )
+        for script, reason in kept:
+            self.assertEqual(screen.unsafe_shell(script), reason, script)
+
 
 if __name__ == "__main__":
     unittest.main()
