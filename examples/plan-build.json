@@ -1,0 +1,6 @@
+{
+  "title": "Compare three pricing pages",
+  "cheapness": 85,
+  "stakes": "low",
+  "action": "parse the saved pricing tables into json locally"
+}

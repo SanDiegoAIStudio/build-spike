@@ -1,0 +1,6 @@
+{
+  "title": "Rebuild the reporting service",
+  "cheapness": 20,
+  "stakes": "medium",
+  "action": "rewrite the service"
+}

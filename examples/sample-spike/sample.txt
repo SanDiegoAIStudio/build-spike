@@ -1,0 +1,3 @@
+alder 12
+birch 7
+cedar 31
