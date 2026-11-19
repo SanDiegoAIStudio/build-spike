@@ -335,6 +335,31 @@ class ScreenTests(unittest.TestCase):
         for script, reason in kept:
             self.assertEqual(screen.unsafe_shell(script), reason, script)
 
+    def test_a_backslash_line_break_right_after_the_pipe_is_pipe_to_shell(self):
+        """source: a backslash line break right after the pipe is pipe-to-shell, and the same break into jq, tee, shasum, a named script or envsubst is not."""
+        cu = "cu" + "rl"
+        flag = " -sSL https://example.test/install.sh"
+        refused = (
+            cu + flag + " | \\\n  sh",
+            cu + flag + " |\\\n  bash -s -- --yes",
+            "wg" + "et -qO- https://example.test/install.sh | \\\n  /bin/bash",
+            cu + flag + " | \\\n  env FOO=1 sh",
+            cu + flag + " | \\\n  python3 -",
+            cu + " -fsSL \\\n  https://example.test/install.sh | \\\n  sh",
+            cu + flag + " | \\\n  /usr/bin/env bash",
+        )
+        for script in refused:
+            self.assertEqual(screen.unsafe_shell(script), "pipe-to-shell", script)
+        kept = (
+            (cu + " -sSL https://example.test/data.json | \\\n  jq .", None),
+            (cu + " -sSL https://example.test/f | \\\n  tee out.txt", None),
+            (cu + " -sSL https://example.test/f | \\\n  shasum -a 256", None),
+            (cu + " -sSL https://example.test/a.py | \\\n  python3 script.py", None),
+            (cu + " -sSL https://example.test/f | \\\n  envsubst", None),
+        )
+        for script, reason in kept:
+            self.assertEqual(screen.unsafe_shell(script), reason, script)
+
 
 if __name__ == "__main__":
     unittest.main()
