@@ -246,6 +246,59 @@ class ScreenTests(unittest.TestCase):
         for script, reason in kept:
             self.assertEqual(screen.unsafe_shell(script), reason, script)
 
+    def test_a_path_or_env_shell_and_an_interpreter_ending_are_pipe_to_shell(self):
+        """source: a shell named by a path or through env counts like the bare name, and an interpreter may be followed by a pipe, a redirect, ) or a comment."""
+        download = "cu" + "rl -sSL https://example.test/install.sh | "
+        refused = (
+            download + "/bin/sh -s -- install",
+            download + "/bin/bash -s foo",
+            download + "/bin/bash script.sh",
+            download + "env bash -s -- install",
+            download + "env FOO=1 bash",
+            download + "env -i PATH=/usr/bin bash",
+            download + "/usr/bin/env FOO=1 sh -s -- --yes",
+            download + "env FOO=1 python3",
+            download + "env FOO=1 python3 -",
+            download + "python3 2>&1",
+            download + "python3 > out.txt",
+            download + "python3 | tee log",
+            download + "python3 # run it",
+            "x=$(" + download + "python3)",
+        )
+        for script in refused:
+            self.assertEqual(screen.unsafe_shell(script), "pipe-to-shell", script)
+        kept = (
+            (download + "python3 -m json.tool", None),
+            (download + "python3 -c pass", None),
+            (download + "python3 script.py", None),
+            (download + "python3 script.py 2>&1", None),
+            (download + "python3 -m json.tool > out.json", None),
+            (download + "python3 -W ignore", None),
+            (download + "perl -e 1", None),
+            (download + "nodemon", None),
+            (download + "perltidy", None),
+            (download + "shellcheck -", None),
+            (download + "jq .", None),
+            (download + "jq . > out.json", None),
+            (download + "tee f | sh", None),
+            (download + "/usr/bin/shasum -a 256", None),
+            (download + "/opt/sh/tool run", None),
+            (download + "envsubst", None),
+            (download + "env", None),
+            ('eval "$(brew shellenv)"', None),
+            ("echo eval", None),
+            (download + "python3", "pipe-to-shell"),
+            (download + "python3 -u", "pipe-to-shell"),
+            (download + "python3 -", "pipe-to-shell"),
+            (download + "bash", "pipe-to-shell"),
+            (download + "sh -s -- --yes", "pipe-to-shell"),
+            (download + "/bin/bash", "pipe-to-shell"),
+            (download + "/usr/bin/env bash -s -- --yes", "pipe-to-shell"),
+            ('eval "$(' + "cu" + "rl -fsSL https://example.test/env.sh)\"", "pipe-to-shell"),
+        )
+        for script, reason in kept:
+            self.assertEqual(screen.unsafe_shell(script), reason, script)
+
 
 if __name__ == "__main__":
     unittest.main()

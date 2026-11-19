@@ -19,9 +19,11 @@ UNSAFE = (
      "rm -rf on an absolute/home path"),
     (r"\bsudo\b", "sudo"),
     (r"(?m)(curl|wget)[^\n|]*\|\s*(?:ba|z|da|k)?sh\b"
-     r"|(curl|wget)[^\n|]*\|\s*(?:\S*/)?(?:\benv\b(?:\s+-\S+)*\s+)?"
-     r"(?:zsh|bash|dash|ksh|sh|fish|perl|ruby|node|php|python(?:[23](?:\.\d+)?)?)\b"
-     r"(?:\s+-\S+)*(?:(?=\s*(?:$|[;&]|&&|\|\|))|\s+(?:-|/dev/stdin)(?!\S))"
+     r"|(curl|wget)[^\n|]*\|\s*(?:\S*/)?(?:\benv\b(?:\s+(?:-\S+|\S*=\S*))*\s+)?"
+     r"(?:(?:zsh|bash|dash|ksh|sh)\b(?=[\s;&)<>|]|$)"
+     r"|(?:fish|perl|ruby|node|php|python(?:[23](?:\.\d+)?)?)\b"
+     r"(?:\s+-\S+)*(?:(?=\s*(?:$|[;&)#<>|]|&&|\|\||\d+>))"
+     r"|\s+(?:-|/dev/stdin)(?!\S)))"
      r"|\b(?:bash|zsh|dash|ksh|sh)\s+-c\s+[\"']\$\((?:curl|wget)"
      r"|\beval\s+[\"']?\$\(\s*(?:curl|wget)"
      r"|\b(?:bash|dash|ksh|sh|source)\s*<\(\s*(?:curl|wget)"

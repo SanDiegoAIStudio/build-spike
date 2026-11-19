@@ -64,7 +64,7 @@ MUTATIONS = [
     ("gate: deletes is not treated as destructive", "gate.py",
      [("deletes?", "delete")], 1),
     ("gate: charge, refund, donate, money and fund are not spending", "gate.py",
-     [("charg(?:e|es|ed|ing)|refund(?:s|ed|ing)?|donat(?:e|es|ed|ing)|money|funds?", "")], 1),
+     [("charg(?:e|es|ed|ing)|refund(?:s|ed|ing)?|donat(?:e|es|ed|ing)|money|funds?", "(?!)")], 1),
     ("gate: notify, upload, message, mail, share, invite and submit are not outward", "gate.py",
      [("notif(?:y|ies|ied|ying|ication|ications)|upload(?:s|ed|ing)?|messag(?:e|es|ed|ing)|"
        "mails?|mailed|mailing|shar(?:e|es|ed|ing)|invit(?:e|es|ed|ing)|submit(?:s|ted|ting)?|",
@@ -72,9 +72,9 @@ MUTATIONS = [
     ("gate: phone, dial, voicemail and a call to a person are not outward", "gate.py",
      [("phon(?:e|ed|ing)|dial(?:s|ed|ing)?|voicemails?|call(?:s|ed|ing)?"
        "\\s+(?:(?:their|your|the|our|an|my|a)\\s+)?"
-       "(?:customer|client|lead|user|owner|vendor|people|someone|them)s?", "")], 1),
+       "(?:customer|client|lead|user|owner|vendor|people|someone|them)s?", "(?!)")], 1),
     ("gate: git push and push to are not production", "gate.py",
-     [("git\\s+push(?!\\s+--force)|push(?:es|ed|ing)?\\s+to", "")], 1),
+     [("git\\s+push(?!\\s+--force)|push(?:es|ed|ing)?\\s+to", "(?!)")], 1),
     ("gate: remove and overwrite are not destructive", "gate.py",
      [("|remov(?:e|es|ed|ing)|overwrit(?:e|es|ing|ten)|overwrote", "")], 1),
     # screen
@@ -109,9 +109,15 @@ MUTATIONS = [
     ("screen: pipe-to-shell misses a path prefix", "screen.py",
      [("(?:\\S*/)?", "")], 1),
     ("screen: pipe-to-shell misses env", "screen.py",
-     [("(?:\\benv\\b(?:\\s+-\\S+)*\\s+)?", "")], 1),
+     [("(?:\\benv\\b(?:\\s+(?:-\\S+|\\S*=\\S*))*\\s+)?", "")], 1),
     ("screen: pipe-to-shell misses the new interpreters", "screen.py",
-     [("|fish|perl|ruby|node|php|python(?:[23](?:\\.\\d+)?)?", "")], 1),
+     [("|(?:fish|perl|ruby|node|php|python(?:[23](?:\\.\\d+)?)?)", "")], 1),
+    ("screen: pipe-to-shell misses a shell named by a path or through env", "screen.py",
+     [("(?:zsh|bash|dash|ksh|sh)\\b(?=[\\s;&)<>|]|$)", ""),
+      ("|(?:fish|perl|ruby|node|php|python(?:[23](?:\\.\\d+)?)?)",
+       "(?:fish|perl|ruby|node|php|python(?:[23](?:\\.\\d+)?)?)")], 1),
+    ("screen: pipe-to-shell misses a pipe, redirect, ) or comment after an interpreter", "screen.py",
+     [(")#<>|]|&&|\\|\\||\\d+>", "]|&&|\\|\\|")], 1),
     ("screen: pipe-to-shell misses a program read from stdin", "screen.py",
      [("|\\s+(?:-|/dev/stdin)(?!\\S)", "")], 1),
     ("screen: pipe-to-shell misses eval of a download", "screen.py",
